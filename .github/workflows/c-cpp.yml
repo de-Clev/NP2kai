@@ -1,0 +1,36 @@
+name: Build NP2kai
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  release:
+    types: [created]
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y cmake ninja-build build-essential \
+          libsdl2-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+          libsdl1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev \
+          libusb-1.0-0-dev libssl-dev
+
+    - name: Create build directory
+      run: |
+        mkdir build && cd build
+        cmake .. -D BUILD_SDL=ON
+        make -j$(nproc)
+
+    - name: Save executable
+      uses: actions/upload-artifact@v3
+      with:
+        name: np2kai-linux-bin
+        path: build/sdlnp21kai
