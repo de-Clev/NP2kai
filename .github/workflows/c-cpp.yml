@@ -30,9 +30,9 @@ jobs:
         mkdir build
         cd build
         if [ "${{ inputs.build_mode }}" = "debug" ]; then
-          cmake .. -DCMAKE_BUILD_TYPE=Debug
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_SDL3=OFF
         else
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_SDL3=OFF
         fi
 
     - name: Compile
