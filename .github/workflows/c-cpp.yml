@@ -24,22 +24,35 @@ jobs:
       run: |
         sudo apt update
         sudo apt install git cmake ninja-build nasm build-essential libx11-dev libglib2.0-dev libgtk2.0-dev libsdl2-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev  libusb-1.0-0-dev libfreetype-dev libfontconfig1-dev libssl-dev
-
+    
+    - name: Build and install SDL3
+      run: |
+          git clone https://github.com/libsdl-org/SDL.git
+          cd SDL
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSDL_SHARED=ON \
+            -DSDL_STATIC=OFF
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
+    
+    - name: Compile
+      run: |
+        cd build
+        make -j$(nproc)
     - name: Configure build
       run: |
         mkdir build
         cd build
         if [ "${{ inputs.build_mode }}" = "debug" ]; then
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_SDL3=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug 
         else
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_SDL3=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Release
         fi
-
-    - name: Compile
-      run: |
-        cd build
-        make -j$(nproc)
-
+  
     - name: Package output
       run: |
         mkdir artifact
