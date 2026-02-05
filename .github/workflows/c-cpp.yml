@@ -1,36 +1,58 @@
-name: Build NP2kai
+name: Build NP2kai (Linux X11)
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: "Build type"
+        required: true
+        default: "release"
+        type: choice
+        options:
+          - release
+          - debug
 
 jobs:
-  build_linux:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout source
+      uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Install build dependencies (X11 only)
       run: |
         sudo apt update
-        sudo apt install -y cmake ninja-build build-essential \
-          libsdl2-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-          libsdl1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev \
+        sudo apt install -y \
+          build-essential cmake ninja-build \
+          libx11-dev libxrandr-dev libxinerama-dev \
+          libxcursor-dev libxi-dev \
           libusb-1.0-0-dev libssl-dev
 
-    - name: Create build directory
+    - name: Configure build
       run: |
-        mkdir build && cd build
-        cmake .. -D BUILD_SDL=ON
+        mkdir build
+        cd build
+        if [ "${{ inputs.build_mode }}" = "debug" ]; then
+          cmake .. -DCMAKE_BUILD_TYPE=Debug
+        else
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+        fi
+
+    - name: Compile
+      run: |
+        cd build
         make -j$(nproc)
 
-    - name: Save executable
-      uses: actions/upload-artifact@v3
+    - name: Package output
+      run: |
+        mkdir artifact
+        cp build/*np2* artifact/ || true
+        cp build/*NP2* artifact/ || true
+        cp build/*kai* artifact/ || true
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: np2kai-linux-bin
-        path: build/sdlnp21kai
+        name: np2kai-linux-x11-${{ inputs.build_mode }}
+        path: artifact/
